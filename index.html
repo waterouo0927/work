@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101522">
+  <title>網頁開發入門｜互動小測驗</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101522;
+      --surface: #181f2e;
+      --surface-raised: #202a3b;
+      --text: #f3f5fb;
+      --muted: #a7b0c2;
+      --accent: #a9f0d1;
+      --accent-strong: #75dcb5;
+      --line: rgba(224, 232, 247, .12);
+      --wrong: #ffaaa9;
+      --right: #85e2bc;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(80, 119, 130, .16), transparent 34rem),
+        var(--bg);
+      font-family: "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.65;
+    }
+
+    button { font: inherit; }
+
+    .shell {
+      width: min(100% - 40px, 920px);
+      margin: 0 auto;
+      padding: 38px 0 52px;
+    }
+
+    .topbar, .brand, .top-actions, .progress-labels, .question-meta,
+    .nav-row, .result-actions, .review-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand { justify-content: flex-start; gap: 12px; }
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(169, 240, 209, .28);
+      border-radius: 14px;
+      color: var(--accent);
+      background: rgba(169, 240, 209, .08);
+      font-size: 19px;
+      font-weight: 800;
+    }
+    .brand-title { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+    .brand-subtitle { color: var(--muted); font-size: 12px; }
+    .top-actions { justify-content: flex-end; }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .intro { padding: 54px 0 28px; }
+    h1 {
+      max-width: 720px;
+      margin: 9px 0 10px;
+      font-size: clamp(30px, 5vw, 46px);
+      letter-spacing: -.045em;
+      line-height: 1.2;
+    }
+    .intro p { max-width: 650px; margin: 0; color: var(--muted); }
+
+    .quiz-card, .result-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(30, 39, 56, .97), rgba(22, 29, 43, .97));
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .24);
+    }
+    .quiz-card { padding: clamp(22px, 4vw, 38px); }
+    .progress-labels { margin-bottom: 10px; color: var(--muted); font-size: 13px; }
+    .progress-labels strong { color: var(--text); font-weight: 650; }
+    .progress-track {
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 30px;
+      border-radius: 9px;
+      background: rgba(255,255,255,.09);
+    }
+    .progress-fill {
+      width: 10%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-strong), #c7f5df);
+      transition: width .25s ease;
+    }
+    .question-meta { justify-content: flex-start; margin-bottom: 11px; }
+    .topic-chip {
+      padding: 4px 10px;
+      border: 1px solid rgba(169, 240, 209, .18);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(169, 240, 209, .06);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .question-number { color: var(--muted); font-size: 13px; }
+    h2 {
+      margin: 0 0 24px;
+      font-size: clamp(20px, 3vw, 25px);
+      letter-spacing: -.02em;
+      line-height: 1.55;
+    }
+    .options { display: grid; gap: 11px; }
+    .option {
+      display: flex;
+      width: 100%;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      color: var(--text);
+      background: rgba(255,255,255,.035);
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+    .option:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: rgba(169, 240, 209, .48);
+      background: rgba(169, 240, 209, .07);
+    }
+    .option:focus-visible, button:focus-visible {
+      outline: 3px solid rgba(169, 240, 209, .72);
+      outline-offset: 3px;
+    }
+    .option.selected {
+      border-color: var(--accent-strong);
+      background: rgba(117, 220, 181, .11);
+    }
+    .option.correct {
+      border-color: rgba(133, 226, 188, .55);
+      background: rgba(133, 226, 188, .1);
+    }
+    .option.incorrect {
+      border-color: rgba(255, 170, 169, .55);
+      background: rgba(255, 170, 169, .08);
+    }
+    .option:disabled { cursor: default; }
+    .option-letter {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .selected .option-letter { border-color: var(--accent-strong); color: var(--accent); }
+    .option-text { padding-top: 2px; overflow-wrap: anywhere; }
+    .option-text code, .explanation code, .hint-text code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      color: #d3f6e5;
+      background: rgba(0,0,0,.24);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: .93em;
+    }
+
+    .hint-box, .feedback {
+      margin-top: 17px;
+      padding: 13px 15px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    .hint-box {
+      border: 1px solid rgba(169, 240, 209, .16);
+      color: #d5e5e0;
+      background: rgba(169, 240, 209, .055);
+    }
+    .hint-box strong { color: var(--accent); }
+    .feedback {
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(0,0,0,.12);
+    }
+    .feedback.is-correct { border-color: rgba(133, 226, 188, .25); color: var(--right); }
+    .feedback.is-wrong { border-color: rgba(255, 170, 169, .25); color: var(--wrong); }
+    .feedback p { margin: 4px 0 0; color: #d3d9e5; }
+
+    .nav-row { margin-top: 26px; }
+    .nav-group { display: flex; gap: 10px; }
+    .button {
+      display: inline-flex;
+      min-height: 43px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 17px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--text);
+      background: rgba(255,255,255,.045);
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease, border-color .16s ease;
+    }
+    .button:hover { transform: translateY(-1px); background: rgba(255,255,255,.09); }
+    .button:disabled { opacity: .42; cursor: not-allowed; transform: none; }
+    .button.primary {
+      border-color: transparent;
+      color: #14251e;
+      background: var(--accent);
+    }
+    .button.primary:hover { background: #c0f5dd; }
+    .button.ghost { border-color: transparent; color: var(--muted); background: transparent; }
+    .button.ghost:hover { color: var(--text); background: rgba(255,255,255,.06); }
+    .key-hint { color: var(--muted); font-size: 12px; }
+    .key-hint kbd {
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: rgba(255,255,255,.04);
+    }
+    .hidden { display: none !important; }
+
+    .result-card { padding: clamp(24px, 5vw, 46px); }
+    .result-hero { display: grid; justify-items: center; padding: 6px 0 29px; text-align: center; }
+    .score-ring {
+      display: grid;
+      width: 132px;
+      height: 132px;
+      place-items: center;
+      margin: 16px 0;
+      border: 1px solid rgba(169, 240, 209, .34);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(169,240,209,.13), rgba(169,240,209,.025) 70%);
+      box-shadow: 0 0 45px rgba(117,220,181,.09);
+    }
+    .score-value { font-size: 37px; font-weight: 750; line-height: 1.1; }
+    .score-value span { color: var(--muted); font-size: 15px; font-weight: 500; }
+    .result-hero h2 { margin: 3px 0; }
+    .result-hero p { margin: 0; color: var(--muted); }
+    .result-actions { justify-content: center; }
+    .review-list { display: grid; gap: 11px; margin-top: 30px; }
+    .review-item {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+    }
+    .review-heading { align-items: flex-start; }
+    .review-heading strong { font-size: 14px; }
+    .review-status { flex: 0 0 auto; font-size: 12px; font-weight: 700; }
+    .review-status.correct { color: var(--right); }
+    .review-status.incorrect { color: var(--wrong); }
+    .review-question { margin: 7px 0 8px; font-weight: 600; }
+    .review-answer, .review-explanation { margin: 3px 0; color: var(--muted); font-size: 13px; }
+    .review-answer b { color: var(--text); font-weight: 600; }
+    .review-explanation { color: #c4ccda; }
+    .footer-note { margin: 17px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @media (max-width: 600px) {
+      .shell { width: min(100% - 24px, 920px); padding-top: 22px; }
+      .intro { padding: 38px 2px 22px; }
+      .quiz-card { border-radius: 19px; }
+      .option { padding: 13px; gap: 11px; }
+      .nav-row { align-items: flex-start; }
+      .key-hint { display: none; }
+      .button { min-height: 41px; padding: 8px 13px; }
+      .topbar { gap: 8px; }
+      .brand-subtitle { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">&lt;/&gt;</div>
+        <div>
+          <div class="brand-title">WEB DEV · 入門練習</div>
+          <div class="brand-subtitle">把基礎概念變成實作直覺</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="eyebrow">互動小測驗</span>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div class="eyebrow">10 題 · 約 5 分鐘</div>
+      <h1>網頁開發入門<br>隨堂練習</h1>
+      <p>測測你對 HTML、CSS、VS Code 與網站檔案結構的理解。每題選一個最適合的答案，完成後即可查看解析。</p>
+    </section>
+
+    <section id="quiz-view" class="quiz-card" aria-live="polite">
+      <div class="progress-labels">
+        <span>作答進度</span>
+        <strong id="progress-count">01 / 10</strong>
+      </div>
+      <div class="progress-track" role="progressbar" aria-label="作答進度" aria-valuemin="1" aria-valuemax="10" aria-valuenow="1">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div class="question-meta">
+        <span id="topic-chip" class="topic-chip"></span>
+        <span id="question-number" class="question-number"></span>
+      </div>
+      <h2 id="question-text"></h2>
+      <div id="options" class="options" role="group" aria-label="答案選項"></div>
+      <div id="hint-box" class="hint-box hidden" role="status"></div>
+      <div id="feedback" class="feedback hidden" role="status"></div>
+      <div class="nav-row">
+        <button id="hint-button" class="button ghost" type="button" aria-expanded="false">看提示</button>
+        <div class="nav-group">
+          <button id="back-button" class="button" type="button">← 上一題</button>
+          <button id="next-button" class="button primary" type="button">下一題 →</button>
+          <button id="submit-button" class="button primary hidden" type="button">完成作答</button>
+        </div>
+      </div>
+      <div class="footer-note"><span class="key-hint"><kbd>←</kbd> <kbd>→</kbd> 切換題目　·　選項可用 <kbd>1</kbd>–<kbd>4</kbd> 作答</span></div>
+    </section>
+
+    <section id="result-view" class="result-card hidden" aria-live="polite">
+      <div class="result-hero">
+        <div class="eyebrow">測驗完成</div>
+        <div class="score-ring"><div id="score" class="score-value"></div></div>
+        <h2 id="result-title"></h2>
+        <p id="result-message"></p>
+      </div>
+      <div class="result-actions">
+        <button id="retry-button" class="button primary" type="button">再挑戰一次</button>
+        <button id="review-button" class="button" type="button">回到錯題</button>
+      </div>
+      <div id="review-list" class="review-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        topic: "前端三劍客",
+        question: "想只改變個人介紹頁的整體視覺風格，不動原本的文字與結構，最適合怎麼做？",
+        options: [
+          "重寫整份 HTML，並刪除原有段落文字",
+          "用 JavaScript 把頁面所有標題都改成較小的標籤",
+          "更改 HTML 檔名，讓瀏覽器自動套用另一種外觀",
+          "調整頁面使用的 CSS 樣式或主題 class"
+        ],
+        answer: 3,
+        hint: "想想看：HTML、CSS、JavaScript 分別負責網頁的哪個部分？",
+        explanation: "HTML 描述內容結構，CSS 負責外觀樣式。要改整體視覺，應調整 CSS 或切換樣式 class，而不是重寫內容或竄改標籤。"
+      },
+      {
+        topic: "VS Code 工作流程",
+        question: "在 VS Code 修改 HTML 後，希望儲存時瀏覽器也能方便地重新整理預覽，哪個做法最合適？",
+        options: [
+          "把 HTML 副檔名改成 .txt，再用瀏覽器打開",
+          "開啟 Auto Save，並搭配 Live Server 等本機預覽工具",
+          "每次修改都把程式碼貼到 Chrome 開發者工具",
+          "按 F12 並選擇「啟動新網頁」來同步檔案"
+        ],
+        answer: 1,
+        hint: "需要的是編輯器儲存檔案，以及能預覽本機網頁的工具。",
+        explanation: "Auto Save 可自動儲存編輯內容；Live Server 類工具可在本機提供網頁預覽，並在檔案變更時重新載入。"
+      },
+      {
+        topic: "檔案命名與路徑",
+        question: "下列哪一項是較穩妥的網站檔案管理習慣？",
+        options: [
+          "引用圖片時寫入自己電腦的完整磁碟路徑",
+          "圖片、CSS 與 HTML 檔案名稱全部使用中文和空格",
+          "使用清楚一致的英文小寫檔名，並以相對路徑引用資源",
+          "把首頁命名為 home.txt，瀏覽器會自動辨識為網頁"
+        ],
+        answer: 2,
+        hint: "網站搬到另一台電腦後，哪種路徑仍有機會正常運作？",
+        explanation: "英文小寫、避免空格的命名方式有助於跨平台使用；相對路徑依專案資料夾位置尋找資源，不依賴特定電腦的磁碟位置。"
+      },
+      {
+        topic: "HTML 語意標籤",
+        question: "對於一篇 HTML 文章的標題與段落，下列哪種做法較符合語意與可讀性？",
+        options: [
+          "以合適的標題層級呈現標題，並用 <p> 包住一般段落",
+          "所有文字都用 <h1>，再靠空白字元分隔段落",
+          "用 <strong> 取代所有標題標籤，因為它會放大文字",
+          "直接在 HTML 原始碼中換行，瀏覽器就會自動分段"
+        ],
+        answer: 0,
+        hint: "標題和一般段落是不同類型的內容，應選擇各自有意義的標籤。",
+        explanation: "標題標籤表達文件階層，段落則使用 <p>。合適的語意結構也有助於輔助科技理解頁面。"
+      },
+      {
+        topic: "連結與圖片",
+        question: "要在個人名片頁加入一張照片，下列哪個 HTML 寫法最恰當？",
+        options: [
+          "<img src=\"photo.jpg\">",
+          "<a src=\"profile.html\">查看個人介紹</a>",
+          "<img href=\"photo.jpg\" alt=\"我的照片\">",
+          "<img src=\"photo.jpg\" alt=\"穿藍色襯衫的個人照片\">"
+        ],
+        answer: 3,
+        hint: "圖片路徑使用哪個屬性？替圖片補上文字描述的屬性又是什麼？",
+        explanation: "<img> 使用 src 指定圖片來源，並應以 alt 提供替代文字，讓使用螢幕閱讀器或圖片無法載入的人也能理解內容。"
+      },
+      {
+        topic: "瀏覽器與 HTML",
+        question: "在瀏覽器開發者工具中直接修改頁面標題文字，重新載入後通常會發生什麼事？",
+        options: [
+          "修改會自動寫回電腦中的 HTML 原始檔",
+          "改動的是目前瀏覽器中的頁面呈現，重新載入後通常會還原",
+          "所有開啟相同網站的人都會即時看到修改",
+          "瀏覽器會把修改同步回網站的遠端伺服器"
+        ],
+        answer: 1,
+        hint: "開發者工具看到的頁面元素，是否等同於硬碟裡的原始檔案？",
+        explanation: "開發者工具直接修改通常只改到目前分頁中的 DOM；要永久修改網站內容，應編輯並儲存原始檔，再部署到網站伺服器。"
+      },
+      {
+        topic: "HTML 文件骨架",
+        question: "在 VS Code 建立空白的 index.html 後，哪個方式通常能快速產生 HTML5 基本骨架？",
+        options: [
+          "輸入半形驚嘆號 !，再按 Tab 或 Enter 展開 Emmet 範本",
+          "按 Ctrl + /，自動產生整份文件",
+          "先寫 <body></body>，瀏覽器會補上其餘結構並儲存",
+          "在檔名後加上 !，再按 F12"
+        ],
+        answer: 0,
+        hint: "VS Code 內建的 Emmet 常用什麼簡短縮寫產生 HTML 範本？",
+        explanation: "在 HTML 檔案中輸入 ! 並使用 Emmet 展開，可快速建立包含 DOCTYPE、html、head 與 body 的基本文件骨架。"
+      },
+      {
+        topic: "HTML 註解",
+        question: "在 HTML 原始碼中加入一段不想顯示在網頁上的備註，哪個做法正確？",
+        options: [
+          "用 <note>這是備註</note> 包起來",
+          "在文字前後加上雙引號",
+          "使用 <!-- 這是備註 -->，或在 VS Code 使用 Ctrl + /",
+          "把備註放在 <title> 標籤內即可隱藏"
+        ],
+        answer: 2,
+        hint: "HTML 註解有固定的開始與結束符號；編輯器通常也有註解快捷鍵。",
+        explanation: "HTML 註解語法為 <!-- ... -->，瀏覽器不會將註解內容顯示在頁面上；VS Code 可用 Ctrl + / 切換註解。"
+      },
+      {
+        topic: "相對路徑",
+        question: "專案結構如下：web-project/images/cat.jpg 與 web-project/week1/index.html。從 week1/index.html 引用 cat.jpg，應使用哪個相對路徑？",
+        options: [
+          "images/cat.jpg",
+          "../images/cat.jpg",
+          "C:\\Users\\Name\\Desktop\\web-project\\images\\cat.jpg",
+          "./week1/images/cat.jpg"
+        ],
+        answer: 1,
+        hint: "先從 week1 資料夾回到上一層，再進入 images 資料夾。",
+        explanation: "../ 代表上一層目錄，所以從 week1 回到專案根目錄後，再進入 images/cat.jpg。"
+      },
+      {
+        topic: "head 與 body",
+        question: "下列關於 HTML 文件中 <head> 與 <body> 的說明，哪一項正確？",
+        options: [
+          "<head> 放置所有會直接顯示在頁面上的圖片與段落",
+          "<body> 專門放網站標題 <title>，不放頁面內容",
+          "<title> 應放在 <body> 中，讓它顯示在網頁上方",
+          "<head> 常放網頁中繼資料與 <title>；<body> 放主要頁面內容"
+        ],
+        answer: 3,
+        hint: "思考分頁標籤上的標題和使用者實際看到的頁面內容，分別屬於哪個區域。",
+        explanation: "<head> 用來描述文件中繼資料，例如字元編碼與分頁標題；<body> 則包含標題、段落、圖片等主要頁面內容。"
+      }
+    ];
+
+    const letters = ["A", "B", "C", "D"];
+    const answers = Array(questions.length).fill(null);
+    let currentIndex = 0;
+    let submitted = false;
+    let showingHint = false;
+
+    const quizView = document.getElementById("quiz-view");
+    const resultView = document.getElementById("result-view");
+    const progressTrack = document.querySelector(".progress-track");
+
+    function renderQuestion() {
+      const question = questions[currentIndex];
+      document.getElementById("progress-count").textContent =
+        `${String(currentIndex + 1).padStart(2, "0")} / ${questions.length}`;
+      document.getElementById("progress-fill").style.width =
+        `${((currentIndex + 1) / questions.length) * 100}%`;
+      progressTrack.setAttribute("aria-valuenow", String(currentIndex + 1));
+      document.getElementById("topic-chip").textContent = question.topic;
+      document.getElementById("question-number").textContent = `第 ${currentIndex + 1} 題`;
+      document.getElementById("question-text").textContent = question.question;
+
+      const options = document.getElementById("options");
+      options.replaceChildren();
+      question.options.forEach((optionText, optionIndex) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "option";
+        button.setAttribute("aria-pressed", String(answers[currentIndex] === optionIndex));
+        if (answers[currentIndex] === optionIndex) button.classList.add("selected");
+        if (submitted) {
+          button.disabled = true;
+          if (optionIndex === question.answer) button.classList.add("correct");
+          if (answers[currentIndex] === optionIndex && optionIndex !== question.answer) {
+            button.classList.add("incorrect");
+          }
+        }
+        const letter = document.createElement("span");
+        letter.className = "option-letter";
+        letter.textContent = letters[optionIndex];
+        const text = document.createElement("span");
+        text.className = "option-text";
+        text.textContent = optionText;
+        button.append(letter, text);
+        button.addEventListener("click", () => selectAnswer(optionIndex));
+        options.append(button);
+      });
+
+      const hintBox = document.getElementById("hint-box");
+      hintBox.innerHTML = `<strong>小提示：</strong> ${question.hint}`;
+      hintBox.classList.toggle("hidden", !showingHint);
+      document.getElementById("hint-button").setAttribute("aria-expanded", String(showingHint));
+      document.getElementById("hint-button").textContent = showingHint ? "收起提示" : "看提示";
+
+      const feedback = document.getElementById("feedback");
+      feedback.classList.add("hidden");
+      feedback.classList.remove("is-correct", "is-wrong");
+      if (submitted) {
+        const correct = answers[currentIndex] === question.answer;
+        feedback.classList.remove("hidden");
+        feedback.classList.add(correct ? "is-correct" : "is-wrong");
+        feedback.innerHTML = `<strong>${correct ? "答對了！" : `正確答案：${letters[question.answer]}`}</strong><p>${question.explanation}</p>`;
+      }
+
+      document.getElementById("back-button").disabled = currentIndex === 0;
+      document.getElementById("next-button").classList.toggle("hidden", currentIndex === questions.length - 1);
+      document.getElementById("submit-button").classList.toggle("hidden", currentIndex !== questions.length - 1 || submitted);
+      document.getElementById("next-button").disabled = submitted;
+      document.getElementById("hint-button").disabled = submitted;
+    }
+
+    function selectAnswer(optionIndex) {
+      if (submitted) return;
+      answers[currentIndex] = optionIndex;
+      renderQuestion();
+    }
+
+    function goToQuestion(index) {
+      currentIndex = Math.max(0, Math.min(questions.length - 1, index));
+      showingHint = false;
+      renderQuestion();
+      document.getElementById("question-text").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+
+    function submitQuiz() {
+      const unanswered = answers.filter(answer => answer === null).length;
+      if (unanswered > 0) {
+        const shouldSubmit = window.confirm(`還有 ${unanswered} 題尚未作答，確定要交卷嗎？`);
+        if (!shouldSubmit) return;
+      }
+      submitted = true;
+      renderQuestion();
+      renderResults();
+    }
+
+    function renderResults() {
+      const score = answers.reduce((total, answer, index) =>
+        total + (answer === questions[index].answer ? 1 : 0), 0);
+      document.getElementById("score").innerHTML = `${score}<span> / ${questions.length}</span>`;
+      const title = score === questions.length ? "太棒了，全部答對！" :
+        score >= 7 ? "表現很好，繼續保持！" :
+        score >= 4 ? "再複習一下就更穩了！" : "打好基礎，再試一次！";
+      document.getElementById("result-title").textContent = title;
+      document.getElementById("result-message").textContent =
+        `答對 ${score} 題、答錯 ${questions.length - score} 題。每題解析都整理在下方。`;
+
+      const reviewList = document.getElementById("review-list");
+      reviewList.replaceChildren();
+      questions.forEach((question, index) => {
+        const correct = answers[index] === question.answer;
+        const item = document.createElement("article");
+        item.className = "review-item";
+        const heading = document.createElement("div");
+        heading.className = "review-heading";
+        const label = document.createElement("strong");
+        label.textContent = `${String(index + 1).padStart(2, "0")} · ${question.topic}`;
+        const status = document.createElement("span");
+        status.className = `review-status ${correct ? "correct" : "incorrect"}`;
+        status.textContent = correct ? "✓ 答對" : "✕ 答錯";
+        heading.append(label, status);
+        const prompt = document.createElement("p");
+        prompt.className = "review-question";
+        prompt.textContent = question.question;
+        const given = document.createElement("p");
+        given.className = "review-answer";
+        given.innerHTML = `你的答案：<b>${answers[index] === null ? "未作答" : `${letters[answers[index]]}. ${question.options[answers[index]]}`}</b>`;
+        const answer = document.createElement("p");
+        answer.className = "review-answer";
+        answer.innerHTML = `正確答案：<b>${letters[question.answer]}. ${question.options[question.answer]}</b>`;
+        const explanation = document.createElement("p");
+        explanation.className = "review-explanation";
+        explanation.textContent = question.explanation;
+        item.append(heading, prompt, given, answer, explanation);
+        reviewList.append(item);
+      });
+      quizView.classList.add("hidden");
+      resultView.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.getElementById("hint-button").addEventListener("click", () => {
+      showingHint = !showingHint;
+      renderQuestion();
+    });
+    document.getElementById("back-button").addEventListener("click", () => goToQuestion(currentIndex - 1));
+    document.getElementById("next-button").addEventListener("click", () => goToQuestion(currentIndex + 1));
+    document.getElementById("submit-button").addEventListener("click", submitQuiz);
+    document.getElementById("retry-button").addEventListener("click", () => {
+      answers.fill(null);
+      currentIndex = 0;
+      submitted = false;
+      showingHint = false;
+      resultView.classList.add("hidden");
+      quizView.classList.remove("hidden");
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    document.getElementById("review-button").addEventListener("click", () => {
+      const firstWrong = answers.findIndex((answer, index) => answer !== questions[index].answer);
+      if (firstWrong < 0) {
+        resultView.classList.add("hidden");
+        quizView.classList.remove("hidden");
+        goToQuestion(0);
+        return;
+      }
+      resultView.classList.add("hidden");
+      quizView.classList.remove("hidden");
+      goToQuestion(firstWrong);
+    });
+
+    document.addEventListener("keydown", event => {
+      if (quizView.classList.contains("hidden") || submitted) return;
+      if (event.key === "ArrowLeft" && currentIndex > 0) goToQuestion(currentIndex - 1);
+      if (event.key === "ArrowRight" && currentIndex < questions.length - 1) goToQuestion(currentIndex + 1);
+      if (/^[1-4]$/.test(event.key) && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+        selectAnswer(Number(event.key) - 1);
+      }
+    });
+
+    renderQuestion();
+  </script>
+</body>
+</html>
