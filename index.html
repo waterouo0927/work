@@ -492,6 +492,8 @@
     let currentIndex = 0;
     let submitted = false;
     let showingHint = false;
+    let reviewingAnswers = false;
+    let reviewQuestionIndices = [];
 
     const quizView = document.getElementById("quiz-view");
     const resultView = document.getElementById("result-view");
@@ -499,11 +501,20 @@
 
     function renderQuestion() {
       const question = questions[currentIndex];
+      const reviewPosition = reviewingAnswers ? reviewQuestionIndices.indexOf(currentIndex) : -1;
+      const progressIndex = reviewingAnswers ? reviewPosition : currentIndex;
+      const progressLength = reviewingAnswers ? reviewQuestionIndices.length : questions.length;
+      const reviewLabel = reviewQuestionIndices.some(index => answers[index] !== questions[index].answer)
+        ? "錯題進度"
+        : "題目回顧";
+      document.querySelector(".progress-labels span").textContent =
+        reviewingAnswers ? reviewLabel : "作答進度";
       document.getElementById("progress-count").textContent =
-        `${String(currentIndex + 1).padStart(2, "0")} / ${questions.length}`;
+        `${String(progressIndex + 1).padStart(2, "0")} / ${progressLength}`;
       document.getElementById("progress-fill").style.width =
-        `${((currentIndex + 1) / questions.length) * 100}%`;
-      progressTrack.setAttribute("aria-valuenow", String(currentIndex + 1));
+        `${((progressIndex + 1) / progressLength) * 100}%`;
+      progressTrack.setAttribute("aria-valuemax", String(progressLength));
+      progressTrack.setAttribute("aria-valuenow", String(progressIndex + 1));
       document.getElementById("topic-chip").textContent = question.topic;
       document.getElementById("question-number").textContent = `第 ${currentIndex + 1} 題`;
       document.getElementById("question-text").textContent = question.question;
@@ -550,10 +561,22 @@
         feedback.innerHTML = `<strong>${correct ? "答對了！" : `正確答案：${letters[question.answer]}`}</strong><p>${question.explanation}</p>`;
       }
 
-      document.getElementById("back-button").disabled = currentIndex === 0;
-      document.getElementById("next-button").classList.toggle("hidden", currentIndex === questions.length - 1);
-      document.getElementById("submit-button").classList.toggle("hidden", currentIndex !== questions.length - 1 || submitted);
-      document.getElementById("next-button").disabled = submitted;
+      document.getElementById("back-button").disabled = reviewingAnswers
+        ? reviewPosition === 0
+        : currentIndex === 0;
+      document.getElementById("next-button").classList.toggle(
+        "hidden",
+        reviewingAnswers
+          ? reviewPosition === reviewQuestionIndices.length - 1
+          : currentIndex === questions.length - 1
+      );
+      document.getElementById("submit-button").classList.toggle(
+        "hidden",
+        reviewingAnswers ? false : currentIndex !== questions.length - 1 || submitted
+      );
+      document.getElementById("submit-button").textContent =
+        reviewingAnswers ? "返回成績" : "完成作答";
+      document.getElementById("next-button").disabled = submitted && !reviewingAnswers;
       document.getElementById("hint-button").disabled = submitted;
     }
 
@@ -585,9 +608,9 @@
       const score = answers.reduce((total, answer, index) =>
         total + (answer === questions[index].answer ? 1 : 0), 0);
       document.getElementById("score").innerHTML = `${score}<span> / ${questions.length}</span>`;
-      const title = score === questions.length ? "太棒了，全部答對！" :
-        score >= 7 ? "表現很好，繼續保持！" :
-        score >= 4 ? "再複習一下就更穩了！" : "打好基礎，再試一次！";
+      const title = score === questions.length ? "太棒了，你太強了🥳" :
+        score >= 7 ? "表現很好，繼續保持！😉" :
+        score >= 4 ? "再複習一下，別氣餒！🫡" : "你真的有上課嗎?🤔🤔🧐";
       document.getElementById("result-title").textContent = title;
       document.getElementById("result-message").textContent =
         `答對 ${score} 題、答錯 ${questions.length - score} 題。每題解析都整理在下方。`;
@@ -630,34 +653,70 @@
       showingHint = !showingHint;
       renderQuestion();
     });
-    document.getElementById("back-button").addEventListener("click", () => goToQuestion(currentIndex - 1));
-    document.getElementById("next-button").addEventListener("click", () => goToQuestion(currentIndex + 1));
-    document.getElementById("submit-button").addEventListener("click", submitQuiz);
+    document.getElementById("back-button").addEventListener("click", () => {
+      if (reviewingAnswers) {
+        const reviewPosition = reviewQuestionIndices.indexOf(currentIndex);
+        goToQuestion(reviewQuestionIndices[reviewPosition - 1]);
+        return;
+      }
+      goToQuestion(currentIndex - 1);
+    });
+    document.getElementById("next-button").addEventListener("click", () => {
+      if (reviewingAnswers) {
+        const reviewPosition = reviewQuestionIndices.indexOf(currentIndex);
+        goToQuestion(reviewQuestionIndices[reviewPosition + 1]);
+        return;
+      }
+      goToQuestion(currentIndex + 1);
+    });
+    document.getElementById("submit-button").addEventListener("click", () => {
+      if (!reviewingAnswers) {
+        submitQuiz();
+        return;
+      }
+      reviewingAnswers = false;
+      quizView.classList.add("hidden");
+      resultView.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
     document.getElementById("retry-button").addEventListener("click", () => {
       answers.fill(null);
       currentIndex = 0;
       submitted = false;
       showingHint = false;
+      reviewingAnswers = false;
+      reviewQuestionIndices = [];
       resultView.classList.add("hidden");
       quizView.classList.remove("hidden");
       renderQuestion();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
     document.getElementById("review-button").addEventListener("click", () => {
-      const firstWrong = answers.findIndex((answer, index) => answer !== questions[index].answer);
-      if (firstWrong < 0) {
-        resultView.classList.add("hidden");
-        quizView.classList.remove("hidden");
-        goToQuestion(0);
-        return;
+      reviewQuestionIndices = answers.reduce((indices, answer, index) => {
+        if (answer !== questions[index].answer) indices.push(index);
+        return indices;
+      }, []);
+      if (reviewQuestionIndices.length === 0) {
+        reviewQuestionIndices = questions.map((_, index) => index);
       }
+      reviewingAnswers = true;
       resultView.classList.add("hidden");
       quizView.classList.remove("hidden");
-      goToQuestion(firstWrong);
+      goToQuestion(reviewQuestionIndices[0]);
     });
 
     document.addEventListener("keydown", event => {
-      if (quizView.classList.contains("hidden") || submitted) return;
+      if (quizView.classList.contains("hidden") || (submitted && !reviewingAnswers)) return;
+      if (reviewingAnswers) {
+        const reviewPosition = reviewQuestionIndices.indexOf(currentIndex);
+        if (event.key === "ArrowLeft" && reviewPosition > 0) {
+          goToQuestion(reviewQuestionIndices[reviewPosition - 1]);
+        }
+        if (event.key === "ArrowRight" && reviewPosition < reviewQuestionIndices.length - 1) {
+          goToQuestion(reviewQuestionIndices[reviewPosition + 1]);
+        }
+        return;
+      }
       if (event.key === "ArrowLeft" && currentIndex > 0) goToQuestion(currentIndex - 1);
       if (event.key === "ArrowRight" && currentIndex < questions.length - 1) goToQuestion(currentIndex + 1);
       if (/^[1-4]$/.test(event.key) && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
